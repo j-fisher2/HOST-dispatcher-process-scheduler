@@ -117,7 +117,7 @@ int mem_check(int size) {
 
 	//If first time allocating memory, initialize the memory.
 	if (mRemainingMem == TOTAL_MEM && mFirstBlock == NULL) {
-		mFirstBlock = getNewMemBlock();//Initially, the whole memory consists of a single block.
+		mFirstBlock = getNewMemBlock();// memory consists of a single block initially
 		mFirstBlock->size = TOTAL_MEM;
 		mFirstBlock->offset = 0;
 	}
@@ -238,7 +238,6 @@ int mScanners = NUM_SCANNERS;					//Number of free scanners
 int mModems = NUM_MODEMS;						//Number of free modems
 int mCDs = NUM_CDS;	
 
-#define DEBUG_PROCESS false						//Debug flag specific to this file
 
 const int mQUANTUM = 1;							//CPU time allocated to each process in the feedback queue.
 const int mTotalMem = TOTAL_MEM - RESERVED_MEM; //Total memory in the system (excluding the memory reserved for real-time processes).
@@ -251,6 +250,7 @@ queue mJobs;	//User job queue
 
 queue mFcfs;	/*First-come-first-serve queue used for real time (priority = 0) processes
 				  This queue must be empty before the other queues are activated.*/
+				  
 queue mLevel1;	//High priority feedback queue (priority = 1)
 queue mLevel2;	//Medium priority feedback queue (priority = 2)
 queue mLevel3;  //Low priority feedback queue (priority = 3)
@@ -307,13 +307,13 @@ int rsrc_alloc (pcbptr process, int printers, int scanners, int modems, int cds)
 }
 
 void display_process_info(pcbptr process){
-    printf("priority %d, processor time remaining %d, memory location %d, block size %d, resources %d printers %d scanners %d modems %d cds",process->priority,process->remaining_cpu_time,process->memory->offset,process->memory_alloc,process->num_printers,process->num_scanners,process->num_modems,process->num_cds);
+    printf("priority %d, processor time remaining %d, memory location %d, block size %d, resources %d printers %d scanners %d modems %d cds\n",process->priority,process->remaining_cpu_time,process->memory->offset,process->memory_alloc,process->num_printers,process->num_scanners,process->num_modems,process->num_cds);
 }
 
 //Starts process
 void start_process(pcbptr process) {
 	process->status = RUNNING;
-	printf("\tProcess %d started.\n", process->pid);
+	printf("\tProcess ID %d started.\n", process->pid);
 	/*Display process info*/
 	display_process_info(process);
 }
@@ -449,6 +449,8 @@ void start_dispatcher() {
 		/*If a process is running*/
 		if (mActiveProcess != NULL) {
 			mActiveProcess->remaining_cpu_time--;
+			printf("Process ID %d -",mActiveProcess->pid);
+			display_process_info(mActiveProcess);
 			/*If process is done executing, terminate it and free its resources.*/
 			if(mActiveProcess->remaining_cpu_time == 0) {
 				kill_process(mActiveProcess);
@@ -578,10 +580,10 @@ void init_dispatcher(FILE *file) {
 
 
 int main(int argc, char* argv[]){
-    char * fileName = NULL;
+    char * fileName = "process.txt";
 	/* If an argument (file name) is passed, then set the file name. Otherwise,
 	   display contents of the readme file and exit.*/
-	/*
+	
 	if(argc > 1)
 		fileName = argv[1];
 		
@@ -594,8 +596,10 @@ int main(int argc, char* argv[]){
 
 	init_dispatcher(file);
 	fclose(file);
-	start_dispatcher(); //Run the dispatcher.
-	*/
+	start_dispatcher(); //Run the dispatcher
+	printf("\nAll jobs finished");
+	
 	return 0;
 }
+
 
