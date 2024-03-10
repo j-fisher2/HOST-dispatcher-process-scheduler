@@ -41,10 +41,3 @@ lowered (if possible) and it is re-queued on the appropriate priority queue.
 ## Dispatch List
 
 The Dispatch List is a text/csv file containing process information, including arrival time, priority, processor time, memory block size, and requested resources.
-
-
----
-
-**Project by [Your Name]**
-
-*Date: [Date]*
