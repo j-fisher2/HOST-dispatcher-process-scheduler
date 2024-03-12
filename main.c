@@ -242,7 +242,7 @@ int mCDs = NUM_CDS;
 const int mQUANTUM = 1;							//CPU time allocated to each process in the feedback queue.
 const int mTotalMem = TOTAL_MEM - RESERVED_MEM; //Total memory in the system (excluding the memory reserved for real-time processes).
 int mDispatcher_timer;
-char *mProcessName[] = {"./process", NULL};		//Process parameters (for execvp())
+
 int status = 0;			
 
 queue mInput;	//Input queue
@@ -599,4 +599,3 @@ int main(int argc, char* argv[]){
 	
 	return 0;
 }
-
