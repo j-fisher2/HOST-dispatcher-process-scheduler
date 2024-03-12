@@ -4,12 +4,12 @@
 #include <string.h>
 #include <ctype.h>
 /******************************/
-#define  TOTAL_MEM 	  1024	//Total amount of memory (in MB) for processes
-#define	 RESERVED_MEM 64		//Amount of memory reserved for real-time processes
+#define  TOTAL_MEM 	  1024	//Total amount of memory (MB) for processes
+#define	 RESERVED_MEM 64		// reserved for real-time processes
 #define  NUM_PRINTERS 2			//Number of printers
 #define  NUM_SCANNERS 1			//Number of scanners
 #define  NUM_MODEMS	 1			//Number of modems
-#define  NUM_CDS	 2	//Number of CD drives
+#define  NUM_CDS	 2	      //Number of CD drives
 /*****************************/
 
 /*************Process statuses*************/
@@ -21,6 +21,7 @@
 #define NEWLINE '\n'
 
 int PID=1;  //starting PID, incremented as each process is added
+
 //input format:  <arrival time>, <priority>, <processor time>, <Mbytes>, <#printers>, <#scanners>, <#modems>, <#CDs>
 
 struct mab {
@@ -35,7 +36,7 @@ typedef Mab * mabptr;
 
 /*Process Information*/
 struct PCB {
-	int pid;							//Process ID, not needed for lab
+	int pid;						
 	int arrival_time;	
 	int remaining_cpu_time;
 	int priority;
@@ -115,7 +116,7 @@ mabptr getNewMemBlock() {
 int mem_check(int size) {
 	int canBeAllocated = 0; //false
 
-	//If first time allocating memory, initialize the memory.
+	//initialize the memory if first allocation.
 	if (mRemainingMem == TOTAL_MEM && mFirstBlock == NULL) {
 		mFirstBlock = getNewMemBlock();// memory consists of a single block initially
 		mFirstBlock->size = TOTAL_MEM;
@@ -143,7 +144,7 @@ int mem_check(int size) {
 	return canBeAllocated;
 }
 
-//Splits block into two. Returns pointer to leftover block
+//Splits memory block
 mabptr mem_split(mabptr memory, int size) {
 	if(memory == NULL) {
 		printf("\tERROR - Passed NULL pointer to mem_split()\n");
@@ -177,20 +178,19 @@ mabptr mem_alloc(int size){
 		mFirstBlock->offset = 0;
 	}
 
-	/*Make sure there is enough memory left in the system*/
+	//Make sure there is enough memory
 	if (mRemainingMem < size) {
-		printf("\tSystem out of memory!!\n");
+		printf("\tSystem out of memory\n");
 		return NULL;
 	}
 		
 	mabptr head = mFirstBlock;	//Pointer used to traverse the list of mem. blocks
 	mabptr memory = NULL;		//Pointer to memory being allocated
 	
-	/*Traverse the list of mem blocks until an available large enough memory block is found
-	   or the end of memory is reached.*/
+	//Traverse the list of mem blocks until an available large enough memory block is found
 	while(head != NULL && ( (!head->allocated && head->size < size) ||
 			head->allocated )){
-		/*If the end of memory is reached, return NULL to indicate allocation failure.*/
+		/*If the end of memory is reached, return NULL*/
 		if( (head->offset + head->size) > TOTAL_MEM)
 			return NULL;
 		head = head->next;
@@ -251,9 +251,9 @@ queue mJobs;	//User job queue
 queue mFcfs;	/*First-come-first-serve queue used for real time (priority = 0) processes
 				  This queue must be empty before the other queues are activated.*/
 				  
-queue mLevel1;	//High priority feedback queue (priority = 1)
-queue mLevel2;	//Medium priority feedback queue (priority = 2)
-queue mLevel3;  //Low priority feedback queue (priority = 3)
+queue level1;	//High priority (priority = 1)
+queue level2;	//Medium priority (priority = 2)
+queue level3;  //Low priority (priority = 3)
 
 pcbptr mActiveProcess = NULL;	//Currently active process. Set to NULL after running process is terminated.
 
@@ -307,14 +307,14 @@ int rsrc_alloc (pcbptr process, int printers, int scanners, int modems, int cds)
 }
 
 void display_process_info(pcbptr process){
-    printf("priority %d, processor time remaining %d, memory location %d, block size %d, resources %d printers %d scanners %d modems %d cds\n",process->priority,process->remaining_cpu_time,process->memory->offset,process->memory_alloc,process->num_printers,process->num_scanners,process->num_modems,process->num_cds);
+    printf("priority %d, processor time remaining %d, memory location %d, block size %d, %d printers %d scanners %d modems %d cds\n",process->priority,process->remaining_cpu_time,process->memory->offset,process->memory_alloc,process->num_printers,process->num_scanners,process->num_modems,process->num_cds);
 }
 
 //Starts process
 void start_process(pcbptr process) {
 	process->status = RUNNING;
+
 	printf("\tProcess ID %d started.\n", process->pid);
-	/*Display process info*/
 	display_process_info(process);
 }
 
@@ -325,13 +325,13 @@ void placeInQueue(pcbptr process) {
 			enqueue(&mFcfs, process);
 			break;
 		case 1:
-			enqueue(&mLevel1, process);
+			enqueue(&level1, process);
 			break;
 		case 2:
-			enqueue(&mLevel2, process);
+			enqueue(&level2, process);
 			break;
 		case 3:
-			enqueue(&mLevel3, process);
+			enqueue(&level3, process);
 			break;
 		default:
 			printf("Invalid input in placeInQueue()\n");
@@ -376,8 +376,8 @@ void suspend_process(pcbptr process) {
 }
 
 int areEmptyQueues() {
-	if(isEmptyQueue(mFcfs) && isEmptyQueue(mLevel1) &&
-		isEmptyQueue(mLevel2) && isEmptyQueue(mLevel3)){
+	if(isEmptyQueue(mFcfs) && isEmptyQueue(level1) &&
+		isEmptyQueue(level2) && isEmptyQueue(level3)){
 		    return 1;
 	}
 	return 0;
@@ -385,6 +385,7 @@ int areEmptyQueues() {
 //Restarts process
 void restart_process(pcbptr process) {
 	process->status = RUNNING;
+	printf("\tProcess ID %d started.\n", process->pid);
 	display_process_info(process);
 }
 
@@ -473,17 +474,17 @@ void start_dispatcher() {
 			/*Run the a process from the highest priority queue that isn't empty*/
 			if (!isEmptyQueue(mFcfs))
 				mActiveProcess = dequeue(&mFcfs);
-			else if (!isEmptyQueue(mLevel1))
-				mActiveProcess = dequeue(&mLevel1);
-			else if (!isEmptyQueue(mLevel2))
-				mActiveProcess = dequeue(&mLevel2);
-			else if (!isEmptyQueue(mLevel3))
-				mActiveProcess = dequeue(&mLevel3);
+			else if (!isEmptyQueue(level1))
+				mActiveProcess = dequeue(&level1);
+			else if (!isEmptyQueue(level2))
+				mActiveProcess = dequeue(&level2);
+			else if (!isEmptyQueue(level3))
+				mActiveProcess = dequeue(&level3);
 
 			if(mActiveProcess->priority == 0)
 				mActiveProcess->memory = mReservedMem;
 
-			/*If process is suspended, restart it. Otherwise, start it.*/
+			/*If process is suspended, restart it*/
 			if(mActiveProcess->status == SUSPENDED)
 				restart_process(mActiveProcess);
 			else
@@ -495,8 +496,6 @@ void start_dispatcher() {
 }
 
 
-//Reads a line in format "<int1>, <int2>, ..., <int8>" from a filestream and returns the 
-//int values in an malloced array of size 8.
 int * readInfo(FILE *file) {
 	const int SIZE = 8;
 	int * array = malloc(sizeof(int) * SIZE);
@@ -563,9 +562,9 @@ void init_dispatcher(FILE *file) {
 	init_queue(&mInput);
 	init_queue(&mJobs);
 	init_queue(&mFcfs);
-	init_queue(&mLevel1);
-	init_queue(&mLevel2);
-	init_queue(&mLevel3);
+	init_queue(&level1);
+	init_queue(&level2);
+	init_queue(&level3);
 
 	/*Populate input queue.*/
 	while (!feof(file)) {
@@ -581,8 +580,7 @@ void init_dispatcher(FILE *file) {
 
 int main(int argc, char* argv[]){
     char * fileName = "process.txt";
-	/* If an argument (file name) is passed, then set the file name. Otherwise,
-	   display contents of the readme file and exit.*/
+	//If an argument (file name) is passed, then set the file name
 	
 	if(argc > 1)
 		fileName = argv[1];
@@ -601,5 +599,4 @@ int main(int argc, char* argv[]){
 	
 	return 0;
 }
-
 
