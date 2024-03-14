@@ -579,7 +579,7 @@ void init_dispatcher(FILE *file) {
 
 
 int main(int argc, char* argv[]){
-    char * fileName = "process.txt";
+    char * fileName = "";
 	//If an argument (file name) is passed, then set the file name
 	
 	if(argc > 1)
